@@ -12,11 +12,16 @@ module PlutusIR.Transform.Inline.Utils where
 import PlutusCore.Annotation
 import PlutusCore.Builtin qualified as PLC
 import PlutusCore.Name.Unique
+import PlutusCore.Name.UniqueMap (UniqueMap)
+import PlutusCore.Name.UniqueMap qualified as UMap
 import PlutusCore.Quote
 import PlutusCore.Rename
+import PlutusCore.Size
 import PlutusCore.Subst (typeSubstTyNamesM)
 import PlutusIR
+import PlutusIR.Analysis.Builtins
 import PlutusIR.Analysis.Usages qualified as Usages
+import PlutusIR.Analysis.VarInfo qualified as VarInfo
 import PlutusIR.Purity (EvalTerm (..), Purity (..), isPure, termEvaluationOrder, unEvalOrder)
 import PlutusIR.Transform.Rename ()
 import PlutusPrelude
@@ -25,12 +30,7 @@ import Control.Lens hiding (Strict)
 import Control.Monad.Extra
 import Control.Monad.Reader
 import Control.Monad.State
-
 import Data.Semigroup.Generic (GenericSemigroupMonoid (..))
-import PlutusCore.Name.UniqueMap (UniqueMap)
-import PlutusCore.Name.UniqueMap qualified as UMap
-import PlutusIR.Analysis.Builtins
-import PlutusIR.Analysis.VarInfo qualified as VarInfo
 
 -- General infra:
 
@@ -57,16 +57,18 @@ type InliningConstraints tyname name uni fun =
 --
 -- See [Inlining and global uniqueness] for caveats about this information.
 data InlineInfo tyname name uni fun ann = InlineInfo
-    { _iiVarInfo         :: VarInfo.VarsInfo tyname name uni ann
+    { _iiVarInfo              :: VarInfo.VarsInfo tyname name uni ann
     -- ^ Is it strict? Only needed for PIR, not UPLC
-    , _iiUsages          :: Usages.Usages
+    , _iiUsages               :: Usages.Usages
     -- ^ how many times is it used?
-    , _iiHints           :: InlineHints name ann
+    , _iiHints                :: InlineHints name ann
     -- ^ have we explicitly been told to inline?
-    , _iiBuiltinsInfo    :: BuiltinsInfo uni fun
+    , _iiBuiltinsInfo         :: BuiltinsInfo uni fun
     -- ^ the semantics variant.
-    , _iiInlineConstants :: Bool
+    , _iiInlineConstants      :: Bool
     -- ^ should we inline constants?
+    , _iiInlineCallsiteGrowth :: Size
+    -- ^ inline threshold for callsite inlining
     }
 makeLenses ''InlineInfo
 
@@ -274,17 +276,21 @@ remove a binding that we inline.
 
 For strict bindings, the answer is that we can't: we will delay the effects to the use site,
 so they may happen multiple times (or none). So we can only inline bindings whose RHS is pure,
-or if we can prove that the effects don't change. We take a conservative view on this,
-saying that no effects change if:
+or if we can prove that the effects don't change.
+We take a conservative view on this, saying that no effects change if:
 - The variable is clearly the first possibly-effectful term evaluated in the body
 - The variable is used exactly once (so we won't duplicate or remove effects)
 
 For non-strict bindings, the effects already happened at the use site, so it's fine to inline it
 unconditionally.
 
-TODO: if we are not in conservative optimization mode and we're allowed to move/duplicate
+If we are not in conservative optimization mode and we're allowed to move/duplicate
 effects, then we could relax these criteria (e.g. say that the binding must be evaluted
-*somewhere*, but not necessarily before any other effects), but we don't currently.
+*somewhere*, but not necessarily before any other effects).
+
+One instance of this is when logging preservation is disabled then we inline
+variables that are dertermined to get eventually evaluated anyway: such that
+have at least one occurrence outside of a 'delay', lambda or a case branch.
 -}
 
 nameUsedAtMostOnce :: forall tyname name uni fun ann. InliningConstraints tyname name uni fun

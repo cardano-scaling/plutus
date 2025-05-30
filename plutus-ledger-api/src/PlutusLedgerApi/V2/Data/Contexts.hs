@@ -11,9 +11,6 @@
 {-# OPTIONS_GHC -fno-omit-interface-pragmas #-}
 {-# OPTIONS_GHC -fno-specialise #-}
 {-# OPTIONS_GHC -fno-strictness #-}
-#if !MIN_VERSION_base(4,15,0)
-{-# OPTIONS_GHC -Wno-name-shadowing #-}
-#endif
 
 module PlutusLedgerApi.V2.Data.Contexts (
   -- * Pending transactions and related types
@@ -78,7 +75,8 @@ import PlutusTx.AsData qualified as PlutusTx
 import PlutusTx.Data.AssocMap hiding (any)
 import PlutusTx.Data.List (List)
 import PlutusTx.Data.List qualified as Data.List
-import PlutusTx.Prelude hiding (toList)
+import PlutusTx.List qualified as List
+import PlutusTx.Prelude
 import Prettyprinter (Pretty (..), nest, vsep, (<+>))
 
 import PlutusLedgerApi.V1.Crypto (PubKeyHash (..))
@@ -230,7 +228,7 @@ findDatum dsh TxInfo{txInfoData} = lookup dsh txInfoData
 hashes
 -}
 findDatumHash :: Datum -> TxInfo -> Maybe DatumHash
-findDatumHash ds TxInfo{txInfoData} = fst <$> find f (toSOPList txInfoData)
+findDatumHash ds TxInfo{txInfoData} = fst <$> List.find f (toSOPList txInfoData)
  where
   f (_, ds') = ds' == ds
 {-# INLINEABLE findDatumHash #-}

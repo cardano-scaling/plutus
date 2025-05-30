@@ -142,7 +142,6 @@ V-I : ∀ b
 V-I b {tm = zero}   bt = V-I⇒ b bt
 V-I b {tm = suc tm} bt = V-IΠ b bt
 
-
 fullyAppliedBuiltin : ∀ b → Set
 fullyAppliedBuiltin b = BApp b (alldone (fv (signature b))) (alldone (args♯ (signature b)))
 
@@ -582,6 +581,10 @@ BUILTIN expModInteger = λ
      }
   ; _ -> inj₁ userError
   }
+BUILTIN dropList = λ
+  { (app (app (app⋆ base) (V-con integer n)) (V-con (list t) l)) → inj₂ (V-con (list t) (dropLIST n l))
+  ; _ -> inj₁ userError
+  }
 
 -- Take an apparently more general index and show that it is a fully applied builtin.
 mkFullyAppliedBuiltin : ∀ { b }
@@ -644,13 +647,13 @@ step ((s , force-) ◅ V-con _ _)            = ◆ -- constant in delay position
 step ((s , force-) ◅ V-I⇒ b bapp)          = ◆ -- function in delay position
 step ((s , force-) ◅ V-constr i vs)        = ◆ -- SOP in delay position
 step ((s , constr- i vs ρ []) ◅ v)         = s ◅ V-constr i (vs , v)
-step ((s , constr- i vs ρ (x ∷ ts)) ◅ v)   = (s , constr- i (vs , v) ρ ts); ρ ▻ x
+step ((s , constr- i vs ρ (t ∷ ts)) ◅ v)   = (s , constr- i (vs , v) ρ ts); ρ ▻ t
 step ((s , case- ρ ts) ◅ V-constr i vs)    = maybe (pushValueFrames s vs ; ρ ▻_) ◆ (lookup? i ts)
 step ((s , case- ρ ts) ◅ V-ƛ _ _)          = ◆ -- case of lambda
 step ((s , case- ρ ts) ◅ V-con _ _)        = ◆ -- case of constant
 step ((s , case- ρ ts) ◅ V-delay _ _)      = ◆ -- case of delay
 step ((s , case- ρ ts) ◅ V-I⇒ _ _)         = ◆ -- case of builtin value
-step ((s , case- ρ ts) ◅ V-IΠ _ _)         = ◆ -- case of delqyed builtin
+step ((s , case- ρ ts) ◅ V-IΠ _ _)         = ◆ -- case of delayed builtin
 step ((s , (V-I⇒ b {am = 0} bapp ·-)) ◅ v) = either (BUILTIN' b (app bapp v)) (λ _ → ◆) (s ◅_)
 step ((s , (V-I⇒ b {am = suc _} bapp ·-)) ◅ v) = s ◅ V-I b (app bapp v)
 

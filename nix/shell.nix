@@ -1,4 +1,4 @@
-{ inputs, pkgs, lib, project, agda-with-stdlib, r-with-packages }:
+{ inputs, pkgs, lib, project, agda-tools, metatheory, r-with-packages }:
 
 let
 
@@ -28,6 +28,7 @@ let
         enable = true;
         package = tools.stylish-haskell;
         args = [ "--config" ".stylish-haskell.yaml" ];
+        excludes = [ "^plutus-metatheory/src/MAlonzo" ];
       };
       fourmolu = {
         enable = false;
@@ -52,6 +53,13 @@ let
         args = [ "-config" ".editorconfig" ];
         package = pkgs.editorconfig-checker;
       };
+      generate-malonzo-code = {
+        enable = true;
+        entry = "${metatheory.generate-malonzo-code}/bin/generate-malonzo-code";
+        files = "^plutus-metatheory/src";
+        stages = [ "pre-push" ];
+        pass_filenames = false;
+      };
     };
   };
 
@@ -60,7 +68,12 @@ let
   ];
 
   common-pkgs = [
-    agda-with-stdlib
+    agda-tools.agda
+    agda-tools.agda-with-stdlib
+    agda-tools.agda-mode
+
+    metatheory.generate-malonzo-code
+
     r-with-packages
     inputs.nixpkgs-2405.legacyPackages.${pkgs.system}.linkchecker
 
@@ -113,6 +126,7 @@ let
     shellHook = ''
       ${pre-commit-check.shellHook}
       ${locale-archive-hook}
+      export NIX_AGDA_STDLIB=${agda-tools.NIX_AGDA_STDLIB}
       export PS1="\n\[\033[1;32m\][nix-shell:\w]\$\[\033[0m\] "
       echo -e "\n🤟 Welcome to Plutus 🤟"
     '';
@@ -131,7 +145,6 @@ let
 
 
   shell = {
-    ghc8107 = quick-shell;
     ghc966 = full-shell;
     ghc984 = quick-shell;
     ghc9101 = quick-shell;

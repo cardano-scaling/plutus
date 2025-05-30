@@ -44,7 +44,7 @@ This defines the syntax for UPLC and requires that it be "well scoped", which
 is that only variables in the context are used. The context uses de Bruijn naming,
 so the variables are numbered. This numbering is provided by an inductively defined
 natural number, which uses the Maybe type (so: `Nothing` = zero, `Just Just Nothing` = 2)
-to allow direct translation to Haskell. 
+to allow direct translation to Haskell.
 
 ```
 data _⊢ (X : Set) : Set where
@@ -201,6 +201,15 @@ buildDebruijnEncoding : {X : Set} → ℕ → Either ScopeError (Maybe X)
 buildDebruijnEncoding x = extG' (λ _ → inj₁ deBError) x
 
 toWellScoped : {X : Set} → Untyped → Either ScopeError (Maybe X ⊢)
-toWellScoped = scopeCheckU buildDebruijnEncoding 
+toWellScoped = scopeCheckU buildDebruijnEncoding
 
 ```
+Some useful functions for making integer literals.
+```
+open import Agda.Builtin.Int using (Int)
+
+make-integer : RawU.TyTag
+make-integer = RawU.tag2TyTag RawU.integer
+
+con-integer : {X : Set} → ℕ → X ⊢
+con-integer n = (con (tmCon make-integer (Int.pos n)))

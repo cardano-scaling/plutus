@@ -1,7 +1,7 @@
 *.agdai
 *.lagda~
 *.agda~
-src/MAlonzo
+_build
 html/_site
 html/.jekyll-cache
 html/*.html

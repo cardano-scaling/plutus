@@ -1,0 +1,12 @@
+(program
+   1.1.0
+   ((\s -> s s)
+      (\s xs ->
+         force
+           (force (force chooseList)
+              xs
+              (delay [])
+              (delay
+                 ((\x ->
+                     force mkCons (addInteger 1 (force headList xs)) (s s x))
+                    (force tailList xs)))))))

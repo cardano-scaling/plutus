@@ -1,6 +1,5 @@
 {-# LANGUAGE BangPatterns     #-}
 {-# LANGUAGE LambdaCase       #-}
-{-# LANGUAGE TemplateHaskell  #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Main (main) where
@@ -20,6 +19,7 @@ import PlutusCore.MkPlc (mkConstant)
 import PlutusCore.Pretty qualified as PP
 import PlutusPrelude
 
+import Control.Monad.Except
 import Data.ByteString.Lazy qualified as BSL (readFile)
 import Flat (unflat)
 import Options.Applicative
@@ -177,7 +177,7 @@ runApplyToData (ApplyOptions inputfiles ifmt outp ofmt mode) = do
 runTypecheck :: TypecheckOptions -> IO ()
 runTypecheck (TypecheckOptions inp fmt outp printMode nameFormat) = do
   prog <- readProgram fmt inp
-  case PLC.runQuoteT $ do
+  case PLC.runQuoteT $ modifyError PLC.TypeErrorE $ do
     tcConfig <- PLC.getDefTypeCheckConfig ()
     PLC.inferTypeOfProgram tcConfig (void prog)
     of
@@ -231,7 +231,7 @@ runErase (EraseOptions inp ifmt outp ofmt mode) = do
 ---------------- Version ----------------
 
 versioner :: Parser (a -> a)
-versioner = simpleVersioner $(gitAwareVersionInfo Paths.version)
+versioner = simpleVersioner (gitAwareVersionInfo Paths.version)
 
 ---------------- Driver ----------------
 

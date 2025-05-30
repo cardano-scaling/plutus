@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes        #-}
-{-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeApplications  #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
@@ -28,8 +27,8 @@ import UntypedPlutusCore qualified as UPLC
 
 import Control.Lens (coerced, (^..))
 import Control.Monad (when)
-import Control.Monad.Trans.Except (runExcept)
-import Control.Monad.Trans.Reader (runReaderT)
+import Control.Monad.Except (modifyError, runExcept)
+import Control.Monad.Reader (runReaderT)
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Csv qualified as Csv
 import Data.IntMap qualified as IM
@@ -152,7 +151,7 @@ pPirOptions = hsubparser $
 
 compileToPlc :: Bool -> PirProg () -> Either (PirError UnitProvenance) (PlcProg ())
 compileToPlc optimise p = do
-    plcTcConfig <- PLC.getDefTypeCheckConfig PIR.noProvenance
+    plcTcConfig <- modifyError (PIR.PLCError . PLC.TypeErrorE) $ PLC.getDefTypeCheckConfig PIR.noProvenance
     let ctx = getCtx plcTcConfig
     plcProg <- runExcept $ flip runReaderT ctx $ runQuoteT $ PIR.compileProgram p
     pure $ void plcProg
@@ -197,7 +196,7 @@ loadPirAndCompile (CompileOptions language optimise test inp ifmt outp ofmt mode
 
 doOptimisations :: PirTerm PLC.SrcSpan -> Either (PirError UnitProvenance) (PirTerm UnitProvenance)
 doOptimisations term = do
-  plcTcConfig <- PLC.getDefTypeCheckConfig PIR.noProvenance
+  plcTcConfig <- modifyError (PIR.PLCError . PLC.TypeErrorE) $ PLC.getDefTypeCheckConfig PIR.noProvenance
   let ctx = getCtx plcTcConfig
   runExcept $ flip runReaderT ctx $ runQuoteT $ PIR.runCompilerPass PIR.simplifier (PIR.Original () <$ term)
   where
@@ -286,7 +285,7 @@ runPrint (PrintOptions inp outp mode) = do
 
 
 versioner :: Parser (a -> a)
-versioner = simpleVersioner $(gitAwareVersionInfo Paths.version)
+versioner = simpleVersioner (gitAwareVersionInfo Paths.version)
 
 ---------------- Main ----------------
 

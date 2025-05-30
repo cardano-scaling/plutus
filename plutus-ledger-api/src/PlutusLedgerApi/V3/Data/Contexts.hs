@@ -13,9 +13,6 @@
 {-# OPTIONS_GHC -fno-omit-interface-pragmas #-}
 {-# OPTIONS_GHC -fno-specialise #-}
 {-# OPTIONS_GHC -fno-strictness #-}
-#if !MIN_VERSION_base(4,15,0)
-{-# OPTIONS_GHC -Wno-name-shadowing #-}
-#endif
 
 module PlutusLedgerApi.V3.Data.Contexts (
   ColdCommitteeCredential (..),
@@ -146,6 +143,7 @@ import PlutusTx.AsData qualified as PlutusTx
 import PlutusTx.Data.AssocMap
 import PlutusTx.Data.List (List)
 import PlutusTx.Data.List qualified as Data.List
+import PlutusTx.List qualified as List
 import PlutusTx.Prelude qualified as PlutusTx
 import PlutusTx.Ratio (Rational)
 
@@ -645,7 +643,7 @@ hashes
 -}
 findDatumHash :: V2.Datum -> TxInfo -> Haskell.Maybe V2.DatumHash
 findDatumHash ds TxInfo{txInfoData} =
-  PlutusTx.fst PlutusTx.<$> PlutusTx.find f (toSOPList txInfoData)
+  PlutusTx.fst PlutusTx.<$> List.find f (toSOPList txInfoData)
  where
   f (_, ds') = ds' PlutusTx.== ds
 
