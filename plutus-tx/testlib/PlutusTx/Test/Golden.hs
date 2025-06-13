@@ -2,10 +2,14 @@
 {-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeOperators         #-}
 
 module PlutusTx.Test.Golden (
+  -- * TH CodGen
+  goldenCodeGen,
+
   -- * Compilation testing
   goldenPir,
   goldenPirReadable,
@@ -39,6 +43,7 @@ import Data.List qualified as List
 import Data.SatInt (fromSatInt)
 import Data.Text (Text)
 import Flat (Flat)
+import Language.Haskell.TH qualified as TH
 import PlutusCore qualified as PLC
 import PlutusCore.Evaluation.Machine.ExBudget qualified as PLC
 import PlutusCore.Evaluation.Machine.ExMemory (ExCPU (..), ExMemory (..))
@@ -59,6 +64,12 @@ import Test.Tasty (TestName)
 import Test.Tasty.Extras ()
 import Text.Printf (printf)
 import UntypedPlutusCore qualified as UPLC
+
+-- Value assertion tests
+goldenCodeGen :: TH.Ppr a => TestName -> TH.Q a -> TH.ExpQ
+goldenCodeGen name code = do
+  c <- code
+  [| nestedGoldenVsDoc name ".th" $(TH.stringE $ TH.pprint c) |]
 
 goldenBudget :: TestName -> CompiledCode a -> TestNested
 goldenBudget name compiledCode = do
