@@ -1,6 +1,6 @@
 cabal-version:   3.0
 name:            plutus-tx
-version:         1.44.0.0
+version:         1.47.0.0
 license:         Apache-2.0
 license-files:
   LICENSE
@@ -72,6 +72,7 @@ library
     PlutusTx.Blueprint.Validator
     PlutusTx.Blueprint.Write
     PlutusTx.Bool
+    PlutusTx.BuiltinList
     PlutusTx.Builtins
     PlutusTx.Builtins.HasBuiltin
     PlutusTx.Builtins.HasOpaque
@@ -85,6 +86,7 @@ library
     PlutusTx.Enum
     PlutusTx.Eq
     PlutusTx.ErrorCodes
+    PlutusTx.Eval
     PlutusTx.Foldable
     PlutusTx.Function
     PlutusTx.Functor
@@ -134,18 +136,18 @@ library
     , deriving-compat
     , extra
     , flat                   ^>=0.6
+    , formatting
     , hashable
     , lens
     , memory
     , mtl
-    , plutus-core            ^>=1.44
+    , plutus-core            ^>=1.47
     , plutus-core:plutus-ir
     , prettyprinter
     , serialise
     , template-haskell       >=2.13.0.0
     , text
     , th-abstraction
-    , th-compat
     , vector                 ^>=0.13.2
 
   default-extensions: Strict
@@ -166,6 +168,12 @@ library plutus-tx-testlib
     Hedgehog.Laws.Lattice
     Hedgehog.Laws.Ord
     PlutusTx.Test
+    PlutusTx.Test.Golden
+    PlutusTx.Test.Orphans
+    PlutusTx.Test.Run.Code
+    PlutusTx.Test.Run.Uplc
+    PlutusTx.Test.Util.Apply
+    PlutusTx.Test.Util.Compiled
 
   build-depends:
     , base                             >=4.9   && <5
@@ -173,14 +181,15 @@ library plutus-tx-testlib
     , hedgehog
     , lens
     , mtl
-    , plutus-core                      ^>=1.44
+    , plutus-core                      ^>=1.47
     , plutus-core:plutus-core-testlib
     , plutus-core:plutus-ir
-    , plutus-tx                        ^>=1.44
+    , plutus-tx                        ^>=1.47
     , prettyprinter
-    , tagged
     , tasty
     , tasty-hedgehog
+    , tasty-hunit
+    , template-haskell
     , text
 
 test-suite plutus-tx-test
@@ -223,9 +232,9 @@ test-suite plutus-tx-test
     , hedgehog-fn
     , lens
     , mtl
-    , plutus-core                      ^>=1.44
+    , plutus-core                      ^>=1.47
     , plutus-core:plutus-core-testlib
-    , plutus-tx                        ^>=1.44
+    , plutus-tx                        ^>=1.47
     , pretty-show
     , serialise
     , tasty

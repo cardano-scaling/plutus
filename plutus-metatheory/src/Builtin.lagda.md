@@ -158,6 +158,9 @@ data Builtin : Set where
   expModInteger                   : Builtin
   -- DropList
   dropList                        : Builtin
+  -- Hydra Extras
+  sha2-512                        : Builtin
+  sha3-512                        : Builtin
 ```
 
 ## Signatures
@@ -271,6 +274,8 @@ sig n⋆ n♯ (t₃ ∷ t₂ ∷ t₁) tᵣ
     signature lessThanEqualsByteString        = ∙ [ bytestring ↑ , bytestring ↑ ]⟶ bool ↑
     signature sha2-256                        = ∙ [ bytestring ↑ ]⟶ bytestring ↑
     signature sha3-256                        = ∙ [ bytestring ↑ ]⟶ bytestring ↑
+    signature sha2-512                        = ∙ [ bytestring ↑ ]⟶ bytestring ↑
+    signature sha3-512                        = ∙ [ bytestring ↑ ]⟶ bytestring ↑
     signature blake2b-224                     = ∙ [ bytestring ↑ ]⟶ bytestring ↑
     signature blake2b-256                     = ∙ [ bytestring ↑ ]⟶ bytestring ↑
     signature keccak-256                      = ∙ [ bytestring ↑ ]⟶ bytestring ↑
@@ -347,7 +352,8 @@ open SugaredSignature using (signature) public
 arity₀ : Builtin → ℕ
 arity₀ b = (Sig.fv⋆ (signature b)) Data.Nat.+ (Sig.fv♯ (signature b))
 
--- The arity of a builtin, according to its signature.
+-- This should be arity₁ but is left as arity because it is used
+-- elsewhere
 arity : Builtin → ℕ
 arity b = length (Sig.args (signature b))
 
@@ -379,6 +385,8 @@ Each Agda built-in name must be mapped to a Haskell name.
                                           | LessThanEqualsByteString
                                           | Sha2_256
                                           | Sha3_256
+                                          | Sha2_512
+                                          | Sha3_512
                                           | Blake2b_256
                                           | VerifyEd25519Signature
                                           | VerifyEcdsaSecp256k1Signature
@@ -474,6 +482,8 @@ postulate
   B<=                       : ByteString → ByteString → Bool
   SHA2-256                  : ByteString → ByteString
   SHA3-256                  : ByteString → ByteString
+  SHA2-512                  : ByteString → ByteString
+  SHA3-512                  : ByteString → ByteString
   BLAKE2B-256               : ByteString → ByteString
   verifyEd25519Sig          : ByteString → ByteString → ByteString → Maybe Bool
   verifyEcdsaSecp256k1Sig   : ByteString → ByteString → ByteString → Maybe Bool
@@ -564,6 +574,8 @@ postulate
 {-# COMPILE GHC concat = BS.append #-}
 {-# COMPILE GHC SHA2-256 = Hash.sha2_256 #-}
 {-# COMPILE GHC SHA3-256 = Hash.sha3_256 #-}
+{-# COMPILE GHC SHA2-512 = Hash.sha2_512 #-}
+{-# COMPILE GHC SHA3-512 = Hash.sha3_512 #-}
 {-# COMPILE GHC BLAKE2B-256 = Hash.blake2b_256 #-}
 {-# COMPILE GHC equals = (==) #-}
 {-# COMPILE GHC B< = (<) #-}

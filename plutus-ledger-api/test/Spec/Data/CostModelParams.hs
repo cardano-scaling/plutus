@@ -28,9 +28,9 @@ tests =
     "CostModelParams"
     "costModelParams"
     [ embed $ testCase "length" do
-        166 @=? length v1_ParamNames
-        185 @=? length v2_ParamNames
-        297 @=? length v3_ParamNames
+        172 @=? length v1_ParamNames
+        191 @=? length v2_ParamNames
+        303 @=? length v3_ParamNames
     , embed $ testCase "tripping paramname" do
         for_ v1_ParamNames \p ->
           assertBool "tripping v1 cm params failed" $
@@ -41,7 +41,8 @@ tests =
         for_ v3_ParamNames \p ->
           assertBool "tripping v3 cm params failed" $
             Just p == readParamName (showParamName p)
-    , -- \*** FIXME !!! *** : The introduction of the new bitwise builtins has
+    , -- \*** FIXME (https://github.com/IntersectMBO/plutus-private/issues/1612) !!! *** :
+      -- The introduction of the new bitwise builtins has
       -- messed this up because defaultCostModelParamsForTesting is the cost
       -- model parameters for model C,
       -- which now includes the new bitwise builtins.

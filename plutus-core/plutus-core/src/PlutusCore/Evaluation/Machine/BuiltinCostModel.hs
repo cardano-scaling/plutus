@@ -26,10 +26,12 @@ module PlutusCore.Evaluation.Machine.BuiltinCostModel
     , Coefficient20(..)
     , Coefficient11(..)
     , Coefficient02(..)
+    , Coefficient12(..)
     , OneVariableLinearFunction(..)
     , OneVariableQuadraticFunction(..)
     , TwoVariableLinearFunction(..)
     , TwoVariableQuadraticFunction(..)
+    , ExpModCostingFunction(..)
     , ModelSubtractedSizes(..)
     , ModelConstantOrOneArgument(..)
     , ModelConstantOrTwoArguments(..)
@@ -191,6 +193,9 @@ data BuiltinCostModelBase f =
     , paramLengthOfArray                   :: f ModelOneArgument
     , paramListToArray                     :: f ModelOneArgument
     , paramIndexArray                      :: f ModelTwoArguments
+    -- Hydra Extras
+    , paramSha2_512                        :: f ModelOneArgument
+    , paramSha3_512                        :: f ModelOneArgument
     }
     deriving stock (Generic)
     deriving anyclass (FunctorB, TraversableB, ConstraintsB)

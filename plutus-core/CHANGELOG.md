@@ -1,4 +1,45 @@
 
+<a id='changelog-1.47.0.0'></a>
+# 1.47.0.0 — 2025-06-10
+
+## Changed
+
+- In #7106 improved error reporting in the evaluators.
+
+- `StructuralEvaluationError` and `OperationalEvaluationError` were renamed to `StructuralError` and `OperationalError` respectively.
+- `_MachineError` was made obsolete in favor of `_StructuralError`.
+
+- The tags for the flat encodings of the as-yet-unreleased `dropList`,
+  `lengthOfArray`, `listToArray`, `indexArray`, `caseList` and `caseData`
+  built-in functions have been changed pending the possible removal of
+  `caseList` and `caseData`.
+
+<a id='changelog-1.46.0.0'></a>
+# 1.46.0.0 — 2025-05-09
+
+## Removed
+
+- GHC 8.10 is no longer supported.  The supported GHC versions are 9.6 (primary), 9.8, and 9.10.
+
+## Added
+
+- In #7042 implemented force-delay cancellation when delays appear under ifThenElse
+
+## Changed
+
+- When logs preservation is disabled compiler will inline even "impure" terms
+that are determined to be eventually evaluated anyway.
+
+- Enhanced PIR's StrictifyBindings pass with strictness analysis, allowing
+  many more non-strict bindings to be strictified, thereby reducing overhead.
+
+<a id='changelog-1.45.0.0'></a>
+# 1.45.0.0 — 2025-04-15
+
+## Changed
+
+- Builtin functions are pure when partially applied. Fully applied builtins are impure, as well as incorrectly applied ones (e.g. term argument applied instead of a type argument).
+
 <a id='changelog-1.44.0.0'></a>
 # 1.44.0.0 — 2025-04-03
 

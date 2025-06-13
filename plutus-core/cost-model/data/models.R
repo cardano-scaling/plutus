@@ -56,6 +56,7 @@ discard.upper.outliers <- function(fr) {
 }
 
 arity <- function(name) {
+    ## cat (sprintf ("Arity:  %s\n", name))  # Useful to see how far we get
     switch (name,
         "AddInteger" = 2,
         "SubtractInteger" = 2,
@@ -148,7 +149,8 @@ arity <- function(name) {
         "DropList" = 2,
         "LengthOfArray" = 1,
         "ListToArray" = 1,
-        "IndexArray" = 2
+        "IndexArray" = 2,
+        -1  ## Default for missing values
         )
 }
 
@@ -365,7 +367,11 @@ modelFun <- function(path) {
     ## average cost of a CEK step.
     discard.overhead <- function(frame) {
         fname <- frame$name[1]
-        args.overhead <- overhead[arity(fname)]
+        ar <- arity (fname)
+        if(ar < 0) {
+            stop(sprintf("ERROR: no arity information for %s\n", fname))
+        }
+        args.overhead <- overhead[ar]
         mean.time <- mean(frame$t)
         if (mean.time > args.overhead) {
             f <- mutate(frame,across(c("t", "t.mean.lb", "t.mean.ub"), function(x) { x - args.overhead }))
@@ -475,8 +481,6 @@ modelFun <- function(path) {
     quotientIntegerModel  <- divideIntegerModel
     remainderIntegerModel <- divideIntegerModel
     modIntegerModel       <- divideIntegerModel
-    expModIntegerModel    <- constantModel ("ExpModInteger")   # FIXME: stub
-
 
     ## This could possibly be made constant away from the diagonal; it's harmless
     ## to make it linear everywhere, but may overprice some comparisons a bit.
@@ -574,6 +578,8 @@ modelFun <- function(path) {
 
     sha2_256Model    <- linearInX ("Sha2_256")
     sha3_256Model    <- linearInX ("Sha3_256")
+    sha2_512odel    <- linearInX ("Sha2_512")
+    sha3_512Model    <- linearInX ("Sha3_512")
     blake2b_224Model <- linearInX ("Blake2b_224")
     blake2b_256Model <- linearInX ("Blake2b_256")
     keccak_256Model  <- linearInX ("Keccak_256")
@@ -757,7 +763,7 @@ modelFun <- function(path) {
         fname <- "ByteStringToInteger"
         filtered <- data %>%
             filter.and.check.nonempty(fname)
-        m <- lm(t ~  I(y_mem) + I(y_mem^2), filtered)
+        m <- lm(t ~ I(y_mem) + I(y_mem^2), filtered)
         mk.result(m, "quadratic_in_y")
     }
 
@@ -783,15 +789,25 @@ modelFun <- function(path) {
     countSetBitsModel         <- linearInX ("CountSetBits")
     findFirstSetBitModel      <- linearInX ("FindFirstSetBit")
 
+
+    expModIntegerModel    <- {
+        fname <- "ExpModInteger"
+        filtered <- data %>%
+            filter.and.check.nonempty(fname) %>%
+            filter(x_mem > 0 & y_mem > 0) %>%
+            discard.overhead ()
+        m <- lm(t ~ I(y_mem*z_mem) + I(y_mem*z_mem^2), filtered)
+        mk.result(m, "exp_mod_cost")
+    }
+
     dropListModel   <- linearInX     ("DropList")
 
-    ## Arrays - TEMPORARY, but probably right
+    ## Arrays 
     lengthOfArrayModel        <- constantModel ("LengthOfArray")
     listToArrayModel          <- linearInX ("ListToArray")
     indexArrayModel           <- constantModel ("IndexArray")
 
-
-##### Models to be returned to Haskell #####
+    ##### Models to be returned to Haskell #####
 
     models.for.adjustment <-
         list (
@@ -811,6 +827,8 @@ modelFun <- function(path) {
         lessThanEqualsByteStringModel        = lessThanEqualsByteStringModel,
         sha2_256Model                        = sha2_256Model,
         sha3_256Model                        = sha3_256Model,
+        sha2_512Model                        = sha2_512Model,
+        sha3_512Model                        = sha3_512Model,
         blake2b_224Model                     = blake2b_224Model,
         blake2b_256Model                     = blake2b_256Model,
         keccak_256Model                      = keccak_256Model,

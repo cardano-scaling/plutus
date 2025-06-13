@@ -222,6 +222,14 @@ BUILTIN sha3-256 = λ
   { (app base (V-con bytestring b)) -> inj₂ (V-con bytestring (SHA3-256 b))
   ; _ -> inj₁ userError
   }
+BUILTIN sha2-512 = λ
+  { (app base (V-con bytestring b)) -> inj₂ (V-con bytestring (SHA2-512 b))
+  ; _ -> inj₁ userError
+  }
+BUILTIN sha3-512 = λ
+  { (app base (V-con bytestring b)) -> inj₂ (V-con bytestring (SHA3-512 b))
+  ; _ -> inj₁ userError
+  }
 BUILTIN blake2b-256 = λ
   { (app base (V-con bytestring b)) -> inj₂ (V-con bytestring (BLAKE2B-256 b))
   ; _ -> inj₁ userError
@@ -639,7 +647,7 @@ step ((s , force-) ◅ V-con _ _)            = ◆ -- constant in delay position
 step ((s , force-) ◅ V-I⇒ b bapp)          = ◆ -- function in delay position
 step ((s , force-) ◅ V-constr i vs)        = ◆ -- SOP in delay position
 step ((s , constr- i vs ρ []) ◅ v)         = s ◅ V-constr i (vs , v)
-step ((s , constr- i vs ρ (x ∷ ts)) ◅ v)   = (s , constr- i (vs , v) ρ ts); ρ ▻ x
+step ((s , constr- i vs ρ (t ∷ ts)) ◅ v)   = (s , constr- i (vs , v) ρ ts); ρ ▻ t
 step ((s , case- ρ ts) ◅ V-constr i vs)    = maybe (pushValueFrames s vs ; ρ ▻_) ◆ (lookup? i ts)
 step ((s , case- ρ ts) ◅ V-ƛ _ _)          = ◆ -- case of lambda
 step ((s , case- ρ ts) ◅ V-con _ _)        = ◆ -- case of constant
